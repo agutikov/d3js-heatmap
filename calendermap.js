@@ -14,7 +14,7 @@ var color = d3.scale.linear().range(["white", '#002b53'])
     .domain([0, 1])
     
 var svg = d3.select(".calender-map").selectAll("svg")
-    .data(d3.range(2011, 2015))
+    .data(d3.range(2015, 2017))
   .enter().append("svg")
     .attr("width", '100%')
     .attr("data-height", '0.5678')
@@ -74,7 +74,7 @@ d3.csv("data.csv", function(error, csv) {
     d.Comparison_Type = parseInt(d.Comparison_Type);
   });
 
- var Comparison_Type_Max = d3.max(csv, function(d) { return d.Comparison_Type; });
+ var Comparison_Type_Max = 3600*24;
  
   var data = d3.nest()
     .key(function(d) { return d.Date; })
