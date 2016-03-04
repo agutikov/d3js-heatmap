@@ -83,7 +83,7 @@ d3.csv("data.csv", function(error, csv) {
 	
   rect.filter(function(d) { return d in data; })
       .attr("fill", function(d) { return color(data[d]); })
-	  .attr("data-title", function(d) { return "value : "+Math.round(data[d]*100)});   
+      .attr("data-title", function(d) { return "light enabled: " + Math.floor(data[d] / 3600) + "h " + Math.floor((data[d] % 3600) / 60) + "m " + (data[d] % 60) + "s" } );
 	$("rect").tooltip({container: 'body', html: true, placement:'top'}); 
 });
 
