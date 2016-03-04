@@ -78,11 +78,11 @@ d3.csv("data.csv", function(error, csv) {
  
   var data = d3.nest()
     .key(function(d) { return d.Date; })
-    .rollup(function(d) { return  Math.sqrt(d[0].Comparison_Type / Comparison_Type_Max); })
+    .rollup(function(d) { return  d[0].Comparison_Type; })
     .map(csv);
 	
   rect.filter(function(d) { return d in data; })
-      .attr("fill", function(d) { return color(data[d]); })
+      .attr("fill", function(d) { return color(data[d] / Comparison_Type_Max); })
       .attr("data-title", function(d) { return "light enabled: " + Math.floor(data[d] / 3600) + "h " + Math.floor((data[d] % 3600) / 60) + "m " + (data[d] % 60) + "s" } );
 	$("rect").tooltip({container: 'body', html: true, placement:'top'}); 
 });
