@@ -68,6 +68,13 @@ svg.selectAll(".month")
     .attr("id", function(d,i){ return month[i] })
     .attr("d", monthPath);
 
+Date.prototype.yyyymmdd = function() {
+    var yyyy = this.getFullYear().toString();
+    var mm = (this.getMonth()+1).toString(); // getMonth() is zero-based
+    var dd  = this.getDate().toString();
+    return yyyy + (mm[1]?mm:"0"+mm[0]) + (dd[1]?dd:"0"+dd[0]); // padding
+};
+
 d3.json("1.json", function (error, json) {
 
     if (error) return window.alert("Error loading json data");
@@ -79,42 +86,58 @@ d3.json("1.json", function (error, json) {
         var day = tm.getDate()
         d.date = new Date(y, m, day)
         d.next_date = new Date(y, m, day+1)
-        d.datestr = d.date.toISOString().slice(0,10).replace(/-/g,"");
+        d.datestr = d.date.yyyymmdd();
         d.timestamp = new Date(d.created_at)
     });
+
+    Max_Value = 3600*24;
 
     var data = d3.nest()
     .key(function(d) { return d.datestr; })
     .rollup(function(v) {
 
+        var sd = v.sort(function(d){return d.timestamp.getTime()});
+
         var enabled_total_sec = 0
 
-        var first = v[0]
+        var first = sd[0]
         if (first.value == "off") {
+            //console.log(first.datestr, first.date, first.timestamp)
             enabled_total_sec += first.timestamp.getTime() - first.date.getTime()
         }
 
-        var last = v[0]
+        var last = sd.slice(-1)[0]
         if (last.value == "on") {
             enabled_total_sec += last.next_date.getTime() - last.timestamp.getTime()
+            //console.log(first.datestr, last.timestamp, last.next_date, (last.next_date.getTime() - last.timestamp.getTime())/1000/3600)
         }
 
-        var a = v.slice(1)
+        var a = sd.slice(1)
         for (i = 0; i < a.length; i++) {
             if (a[i].value == "off") {
-                enabled_total_sec += a[i].timestamp.getTime() - v[i].timestamp.getTime()
+                enabled_total_sec += a[i].timestamp.getTime() - sd[i].timestamp.getTime()
+                //console.log(first.datestr, sd[i].timestamp, a[i].timestamp, (a[i].timestamp.getTime() - sd[i].timestamp.getTime())/1000/3600)
             }
         }
 
-        return Math.floor(enabled_total_sec/1000);
+        if (enabled_total_sec/1000 > Max_Value) {
+            for (i = 0; i < sd.length; i++) {
+                console.log(sd[i].datestr, sd[i].value, sd[i].timestamp, sd[i].date, sd[i].next_date)
+            }
+            console.log(first.datestr, Math.floor(enabled_total_sec/1000))
+        }
+
+        return [first.date, Math.floor(enabled_total_sec/1000)];
     })
     .map(json);
 
-    Max_Value = 3600*24;
-
     rect.filter(function(d) { return d in data; })
-    .attr("fill", function(d) { return color(data[d] / Max_Value); })
-    .attr("data-title", function(d) { return "light enabled: " + Math.floor(data[d] / 3600) + "h " + Math.floor((data[d] % 3600) / 60) + "m " + (data[d] % 60) + "s" } );
+    .attr("fill", function(d) { return color(data[d][1] / Max_Value); })
+    .attr("data-title", function(d) {
+        var val = data[d][1]
+        var msg = data[d][0].toDateString() + "    " +  val + "  -  " + Math.floor(val / 3600) + "h " + Math.floor((val % 3600) / 60) + "m " + (val % 60) + "s";
+        return msg;
+    } );
     $("rect").tooltip({container: 'body', html: true, placement:'top'}); 
 });
 
