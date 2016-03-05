@@ -68,23 +68,54 @@ svg.selectAll(".month")
     .attr("id", function(d,i){ return month[i] })
     .attr("d", monthPath);
 
-d3.csv("data.csv", function(error, csv) {
+d3.json("1.json", function (error, json) {
 
-  csv.forEach(function(d) {
-    d.Comparison_Type = parseInt(d.Comparison_Type);
-  });
+    if (error) return window.alert("Error loading json data");
 
- var Comparison_Type_Max = 3600*24;
- 
-  var data = d3.nest()
-    .key(function(d) { return d.Date; })
-    .rollup(function(d) { return  d[0].Comparison_Type; })
-    .map(csv);
-	
-  rect.filter(function(d) { return d in data; })
-      .attr("fill", function(d) { return color(data[d] / Comparison_Type_Max); })
-      .attr("data-title", function(d) { return "light enabled: " + Math.floor(data[d] / 3600) + "h " + Math.floor((data[d] % 3600) / 60) + "m " + (data[d] % 60) + "s" } );
-	$("rect").tooltip({container: 'body', html: true, placement:'top'}); 
+    json.forEach(function(d) {
+        var tm = new Date(d.created_at)
+        var y = tm.getFullYear()
+        var m = tm.getMonth()
+        var day = tm.getDate()
+        d.date = new Date(y, m, day)
+        d.next_date = new Date(y, m, day+1)
+        d.datestr = d.date.toISOString().slice(0,10).replace(/-/g,"");
+        d.timestamp = new Date(d.created_at)
+    });
+
+    var data = d3.nest()
+    .key(function(d) { return d.datestr; })
+    .rollup(function(v) {
+
+        var enabled_total_sec = 0
+
+        var first = v[0]
+        if (first.value == "off") {
+            enabled_total_sec += first.timestamp.getTime() - first.date.getTime()
+        }
+
+        var last = v[0]
+        if (last.value == "on") {
+            enabled_total_sec += last.next_date.getTime() - last.timestamp.getTime()
+        }
+
+        var a = v.slice(1)
+        for (i = 0; i < a.length; i++) {
+            if (a[i].value == "off") {
+                enabled_total_sec += a[i].timestamp.getTime() - v[i].timestamp.getTime()
+            }
+        }
+
+        return Math.floor(enabled_total_sec/1000);
+    })
+    .map(json);
+
+    Max_Value = 3600*24;
+
+    rect.filter(function(d) { return d in data; })
+    .attr("fill", function(d) { return color(data[d] / Max_Value); })
+    .attr("data-title", function(d) { return "light enabled: " + Math.floor(data[d] / 3600) + "h " + Math.floor((data[d] % 3600) / 60) + "m " + (data[d] % 60) + "s" } );
+    $("rect").tooltip({container: 'body', html: true, placement:'top'}); 
 });
 
 function numberWithCommas(x) {
