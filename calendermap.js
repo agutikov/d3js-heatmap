@@ -98,36 +98,36 @@ d3.json("1.json", function (error, json) {
 
         var sd = v.sort(function(d){return d.timestamp.getTime()});
 
-        var enabled_total_sec = 0
+        var enabled_total_msec = 0
 
         var first = sd[0]
         if (first.value == "off") {
             //console.log(first.datestr, first.date, first.timestamp)
-            enabled_total_sec += first.timestamp.getTime() - first.date.getTime()
+            enabled_total_msec += first.timestamp.getTime() - first.date.getTime()
         }
 
         var last = sd.slice(-1)[0]
         if (last.value == "on") {
-            enabled_total_sec += last.next_date.getTime() - last.timestamp.getTime()
+            enabled_total_msec += last.next_date.getTime() - last.timestamp.getTime()
             //console.log(first.datestr, last.timestamp, last.next_date, (last.next_date.getTime() - last.timestamp.getTime())/1000/3600)
         }
 
         var a = sd.slice(1)
         for (i = 0; i < a.length; i++) {
             if (a[i].value == "off") {
-                enabled_total_sec += a[i].timestamp.getTime() - sd[i].timestamp.getTime()
+                enabled_total_msec += a[i].timestamp.getTime() - sd[i].timestamp.getTime()
                 //console.log(first.datestr, sd[i].timestamp, a[i].timestamp, (a[i].timestamp.getTime() - sd[i].timestamp.getTime())/1000/3600)
             }
         }
 
-        if (enabled_total_sec/1000 > Max_Value) {
+        if (enabled_total_msec/1000 > Max_Value) {
             for (i = 0; i < sd.length; i++) {
                 console.log(sd[i].datestr, sd[i].value, sd[i].timestamp, sd[i].date, sd[i].next_date)
             }
-            console.log(first.datestr, Math.floor(enabled_total_sec/1000))
+            console.log(first.datestr, Math.floor(enabled_total_msec/1000))
         }
 
-        return [first.date, Math.floor(enabled_total_sec/1000)];
+        return [first.date, Math.floor(enabled_total_msec/1000)];
     })
     .map(json);
 
